@@ -1,8 +1,9 @@
 var express = require('express');
 var app = express();
+var cookieParser = require('cookie-parser');
 
 var bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser');
+
 
 // calling mongoose module
 var mongoose = require('mongoose');
@@ -20,10 +21,10 @@ app.use(bodyParser.urlencoded({
 
 //configuration of database
 
-var dbPath = 'mongodb://localhost/myappdb';
+var dbPath = 'mongodb://localhost/mydatabase';
 
 //command to connect with db
-db = mongoose.connect(dbpath);
+db = mongoose.connect(dbPath);
 
 mongoose.connection.once('open', function(){
 	console.log("database connection open success");
@@ -31,7 +32,7 @@ mongoose.connection.once('open', function(){
 
 //include the model file
 
-var newBlog =require('blogModel.js');
+var newBlog =require('./blogModel.js');
 var blogModel = mongoose.model('Blog');
 //end include
 
@@ -75,36 +76,43 @@ app.get('/blogd/:id', function(req, res){
 
 // start route to create a Blog
 
-app.post('/blog/create', function(req,res){
-	var newBlog = new blogModel({
+app.post('/blog/create', function(req, res) {
 
-		title	: req.body.title,
-		subTitle	: req.body.subTitle,
-		blogBody	: req.body.blogBody
-	});
+    //to save info to schema
+    var newBlog = new blogModel({
 
-	//lets set the date of creation
-	var today = Date.now();
-	newBlog.created = today;
+        title: req.body.title,
+        subtitle: req.body.subtitle,
+        blogBody: req.body.blogBody
+    });
+    var today = Date.now();
+    newBlog.created = today;
 
-	//lets set the tags into array
-	var allTags = (req.body.allTags!=undefined && req.body.alltags != null)	? req.body.alltags.split(',') : '';
-		newBlog.tags = allTags;
-		//let set the author information
-		var authorInfo = {fullName: req.body.authorFullName, email: newBlog.authorInfo = authorInfo};
+    //to save author info
+    newBlog.authorInfo = {
+        authorName: req.body.name,
+        authorEmail: req.body.email
+    };
 
-			//now lets save the file
-			newBlog.save(function(error,result){
-				if(error){
-					console.log(error);
-					res.send(error);
-				}
-				else{
-					res.send(newBlog);
-				}
-			});
-		
-});
+    //to split by , of all the tags
+    newBlog.tags = (req.body.tags != undefined && req.body.tags != null) ? req.body.tags.split(',') : '';
+
+    // save blog
+    newBlog.save(function(err, result) {
+
+        if (err) {
+            //to check if error is due to unique title 
+            if (err.errors.hasOwnProperty('title')) {
+                if (err.errors.title.kind = "unique")
+                    console.log(err);
+            }
+            res.send("Enter unique title ");
+        } else
+            res.send(newBlog);
+    }); //end save blog
+
+}); //end post request to create blog
+
 
 
 //start route to edit a blog using _id
@@ -133,6 +141,69 @@ app.post('/blog/:id/delete', function(req,res){
 		}
 	});
 });
+//route for commenting on a blog.
+app.post('/blog/comment/:id', function(req, res, next) {
+
+    blogModel.findOne({
+        '_id': req.params.id
+    }, function(err, result) {
+
+        if (err) {
+            console.log(err);
+            res.send("Check Your ID");
+        } else {
+
+            //if result is not null 
+            if (result) {
+                var ddate = new Date();
+                timendate = ddate.toString();
+
+                result.comments.push({
+                    Name: req.body.commentorName,
+                    comment: req.body.commentBody,
+                    commentTime: timendate
+                });
+
+                //save comment
+                result.save(function(err) {
+                    if (err) {
+                        console.log("Save comment erorr");
+                        res.send(err);
+                    } else
+                        res.send(result);
+                });
+            } else {
+                res.send("check Your ID");
+                console.log("Id not avaialble in database");
+            }
+        }
+
+    })
+});
+
+//function for any other path for get request i.e Error handler
+app.get('*', function(request, response, next) {
+
+    response.status = 404;
+    next("Error Occured");
+});
+
+//function for any other path for put request i.e Error handler
+app.put('*', function(request, response, next) {
+
+    response.status = 404;
+    next("Error Occured");
+});
+
+//function for any other path for post request i.e Error handler
+app.post('*', function(request, response, next) {
+
+    response.status = 404;
+    next("Error Occured");
+});
+
+//Error handling Middleware 
+//application level middleware
 app.use(function(err, req, res, next) {
 
     console.log("Error handler used");

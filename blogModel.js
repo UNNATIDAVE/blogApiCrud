@@ -1,19 +1,18 @@
-// including Mangoose
+// Including Mangoose
 var mongoose = require('mongoose');
 
-//defining schema
+//Defining schema
 var Schema = mongoose.Schema;
 
 var blogSchema = new Schema({
 
-	//blogId		: {type: String, default: ''} , 
 	title 		:{type: String, default:'', required:true},
 	subTitle 	: {type: String, default:''},
-	blogBody 	: [], 
+	blogBody 	: {type: String, default:''}, 
 	tags		: [],
 	created		: {type:Date},
 	authorInfo	: {},
-	comments	: []
+	comments	: {type: String, default:''}
 });
 
 mongoose.model('Blog',blogSchema);

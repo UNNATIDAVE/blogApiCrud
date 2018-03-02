@@ -1,13 +1,11 @@
+// including module
 var express = require('express');
 var app = express();
-var cookieParser = require('cookie-parser');
-
 var bodyParser = require('body-parser');
-
+var cookieParser = require('cookie-parser');
 
 // calling mongoose module
 var mongoose = require('mongoose');
-
 
 app.use(bodyParser.json({
 	limit: '10mb',
@@ -19,47 +17,63 @@ app.use(bodyParser.urlencoded({
 	extended: true
 }));
 
-//configuration of database
+//////////// Calling Middlewares /////////////
+var middleWares = require('./myMiddleware.js');
 
-var dbPath = 'mongodb://localhost/mydatabase';
+app.get('/normal/route', function(request, response){
+	var dateOfBirth = new Date(request.query.dob);
+	response.send("Your age is above 18. you can access this page. your age is:");
+});
+
+app.get('/restricted/route', middleWares.ageFilter, function(request, response){
+	console.log("Code in route will be executed now");
+	var dateOfBirth = new Date(request.query.dob);
+	response.send("This is a restricted routes accessible to people above 18 years.");
+});
+
+////////// End of Middlewares //////////
+
+//configuration of database
+var dbPath = 'mongodb://localhost/mydb';
 
 //command to connect with db
 db = mongoose.connect(dbPath);
 
+// to make connection
 mongoose.connection.once('open', function(){
 	console.log("database connection open success");
 });
 
-//include the model file
-
-var newBlog =require('./blogModel.js');
+// the model file
+var Blog =require('./blogModel.js');
 var blogModel = mongoose.model('Blog');
-//end include
 
-//here are the routes
+/////////Here are the routes//////////
+
+// First route for documentation/ first page
 app.get('/', function(req, res){
-		res.send("This is a blog application")
+		res.send(" Welcome to Blog Application Page\n -------Refer this Documentation for Blogs------ \n \n Use this base URL for Blogs- http://localhost:3000 \n And Additional URLs for CRUD Operations are as below \n \n 1) Method: 'GET'  Extra in URl: '/blogs'	 : to get all blogs, \n 2) Method: 'GET'  Extra in URl: '/blogs/:Id' :  to find particular blog, \n 3) Method: 'POST'  Extra in URl: '/blogs/create' :  to create a blog , \n 4) Method: 'PUT'  Extra in URl: '/blogs/:Id/edit' :  to edit a blog, \n 5) Method: 'POST'  Extra in URl: '/blogs/:Id/delete' :  to delete a blog, \n 6) Method: 'POST'  Extra in URl: '/blogs/:Id/comment' :  to comment on blog \n 7) Method: 'GET'  Extra in URl: '/normal/route' :  For checking the age using Middlewares \n 8) Method: 'GET'  Extra in URl: '/restricted/route' :  For checking the restricted age using Middlewares \n \n    Thank You! :)");
 });
+// End route for firdt page
 
-/////////// code for the route/////
-
-//start  route to GET all Blogs
+// Second route to GET all Blogs
 
 app.get('/blogs', function(req, res){
 
 	blogModel.find(function(err, result){
 		if(err){
+			console.log("some error");
 			res.send(err);
 		}
 		else{
 			res.send(result);
 		}
 	});		//end user model find
-});
-
+});			
 // end route to GET all blogs
-// route to get a particuler blog
-app.get('/blogd/:id', function(req, res){
+
+// Third route to get a particuler blog
+app.get('/blogs/:id', function(req, res){
 
 	blogModel.findOne({'_id': req.params.id},function(err,result){
 
@@ -68,59 +82,65 @@ app.get('/blogd/:id', function(req, res){
 			res.send(err);
 		}
 		else{
-			res.send(result)
+			res.send(result);
 		}
 	});
 });
 // end route to get a particular blog
 
-// start route to create a Blog
+// Fourth route to create a Blog
+app.post('/blogs/create', function(req,res){
+	var newBlog = new blogModel({
 
-app.post('/blog/create', function(req, res) {
+		title	: req.body.title,
+		subTitle	: req.body.subTitle,
+		blogBody	: req.body.blogBody
+	});
 
-    //to save info to schema
-    var newBlog = new blogModel({
+	//lets set the date of creation
+	var today = Date.now();
+	newBlog.created = today;
 
-        title: req.body.title,
-        subtitle: req.body.subtitle,
-        blogBody: req.body.blogBody
-    });
-    var today = Date.now();
-    newBlog.created = today;
+	//lets set the tags into array
+	var allTags = (req.body.allTags!=undefined && req.body.alltags != null)	? req.body.alltags.split(',') : '';
+		newBlog.tags = allTags;
 
-    //to save author info
-    newBlog.authorInfo = {
-        authorName: req.body.name,
-        authorEmail: req.body.email
-    };
+	//let set the author information
+	var authorInfo = {fullName: req.body.authorFullName, email: newBlog.authorInfo = authorInfo};
 
-    //to split by , of all the tags
-    newBlog.tags = (req.body.tags != undefined && req.body.tags != null) ? req.body.tags.split(',') : '';
+		//now lets save the file
+		newBlog.save(function(error,result){
+			if(error){
+				console.log(error);
+				res.send(error);
+			}
+			else{
+				res.send(newBlog);
+			}
+		});
+		
+});
+// end route to create a blog
 
-    // save blog
-    newBlog.save(function(err, result) {
-
-        if (err) {
-            //to check if error is due to unique title 
-            if (err.errors.hasOwnProperty('title')) {
-                if (err.errors.title.kind = "unique")
-                    console.log(err);
-            }
-            res.send("Enter unique title ");
-        } else
-            res.send(newBlog);
-    }); //end save blog
-
-}); //end post request to create blog
-
-
-
-//start route to edit a blog using _id
-
+//Fifth route to edit a blog using _id
 app.put('/blogs/:id/edit', function(req,res){
 	var update = req.body;
 
-	blogModel.findOneAndUpdate({'_id': req.params.id}, update, function(req, res){
+	blogModel.findOneAndUpdate({'_id': req.params.id}, update, function(req, result){
+			if(err){
+			console.log("some error");
+			res.send(err);
+		}
+		else{
+			res.send(result);
+		}
+	});
+});
+// end route to edit a blog
+
+//Sixth route to delete a blog using _id
+app.post('/blogs/:id/delete', function(req,res){
+	blogModel.remove({'_id':req.params.id},function(err,result){
 		if(err){
 			console.log("some error");
 			res.send(err);
@@ -130,38 +150,24 @@ app.put('/blogs/:id/edit', function(req,res){
 		}
 	});
 });
+// end route to delete a blog
 
-app.post('/blog/:id/delete', function(req,res){
-	blogModel.remove({'_id':req.params.id},function(err,result){
-		if(err){
-			res.send(err)
-		}
-		else{
-			res.send(result)
-		}
-	});
-});
-//route for commenting on a blog.
-app.post('/blog/comment/:id', function(req, res, next) {
+//Seventh route to comment on a blog using _id
+app.post('/blog/:Id/comment', function(req, res) {
 
-    blogModel.findOne({
-        '_id': req.params.id
-    }, function(err, result) {
+    blogModel.findOne({'_id': req.params.id}, function(err, result) {
 
         if (err) {
-            console.log(err);
+            console.log("some error");
             res.send("Check Your ID");
         } else {
 
-            //if result is not null 
+            //result is not null 
             if (result) {
-                var ddate = new Date();
-                timendate = ddate.toString();
-
+                
                 result.comments.push({
                     Name: req.body.commentorName,
                     comment: req.body.commentBody,
-                    commentTime: timendate
                 });
 
                 //save comment
@@ -172,50 +178,49 @@ app.post('/blog/comment/:id', function(req, res, next) {
                     } else
                         res.send(result);
                 });
-            } else {
+            } 
+            else {
                 res.send("check Your ID");
-                console.log("Id not avaialble in database");
             }
         }
 
     })
 });
 
+
 //function for any other path for get request i.e Error handler
-app.get('*', function(request, response, next) {
+app.get('*', function(request, response) {
 
     response.status = 404;
-    next("Error Occured");
+    console.log("Error Occured. Please, Check your Path");
 });
 
 //function for any other path for put request i.e Error handler
-app.put('*', function(request, response, next) {
+app.put('*', function(request, response) {
 
     response.status = 404;
-    next("Error Occured");
+    console.log("Error Occured. Please, Check your Path");
 });
 
 //function for any other path for post request i.e Error handler
-app.post('*', function(request, response, next) {
+app.post('*', function(request, response) {
 
     response.status = 404;
-    next("Error Occured");
+    console.log("Error Occured. Please, Check your Path");
 });
 
 //Error handling Middleware 
 //application level middleware
-app.use(function(err, req, res, next) {
+app.use(function(err, req, res) {
 
-    console.log("Error handler used");
-    //console.error(err.stack);
-
+    console.log("Connection Closed");
+    
     if (res.status == 404) {
-        res.send("Check your Path , Please refer Documentation for API Info");
+        res.send("Check your Path OR refer Documentation for API Path Info");
     } else {
         res.send(err);
     }
 });
-
 
 
 app.listen(3000, function() {

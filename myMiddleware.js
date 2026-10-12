@@ -14,13 +14,11 @@ function ageCalculater(dateOfBirth){
 exports.ageFilter = function(req, res, next){
 
 	var age= ageCalculater(req.query.dob);
-	console.log(age);
 	
 	if(age >= 18){
-		console.log("Age is ok.");
 		next();
 	}
 	else{
-		res.send("Your age is under 18. You are not allowed to access this link.");
+		res.status(200).send("Your age is under 18. You are not allowed to access this link.");
 	}
 };

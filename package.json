@@ -1,0 +1,23 @@
+{
+  "name": "blogapicrud-master",
+  "version": "1.0.0",
+  "description": "Create a REST api for a blog application. This blog backend should have following APIs-       1) API to create a blog       2) API to view all blogs       3) API to view a particular blog       4) API to edit a blog       5) API to delete a blog",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "blog",
+    "blog api",
+    "basic rest api",
+    "rest apis"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.3.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
+    "mongoose": "^9.10.3"
+  }
+}

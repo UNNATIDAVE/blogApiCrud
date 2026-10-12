@@ -12,7 +12,7 @@ var blogSchema = new Schema({
 	tags		: [],
 	created		: {type:Date},
 	authorInfo	: {},
-	comments	: {type: String, default:''}
+	comments	: []
 });
 
 mongoose.model('Blog',blogSchema);

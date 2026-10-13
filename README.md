@@ -1,4 +1,4 @@
-REST APIs for a blog application. This blog backend should have following APIs-
+Basic REST APIs for a blog application with age check middleware. This blog backend should have following APIs-
       
       1) /                  - API to view all blogs. 
       
@@ -18,7 +18,7 @@ Steps to run the application:
     
     2) Run "npm i" to install all the required packages.
     
-    3) Run "node app.js" to run the application
+    3) Run "node app.js" to run the application.
     
     4) check the routes with the Postman/ UI with proper request body and params.
     
